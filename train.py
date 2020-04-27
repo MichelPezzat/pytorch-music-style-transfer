@@ -80,14 +80,14 @@ def train(processed_dir: str, test_wav_dir: str):
         for i in range(num_samples // BATCHSIZE):
             num_iterations = num_samples // BATCHSIZE * epoch + i
 
-            gaussian_noise = np.abs(np.random.normal(0, 0, (BATCHSIZE, TIME_STEP,
+            gaussian_noise = np.abs(np.random.normal(0, 1, (BATCHSIZE, TIME_STEP,
                                                                          PITCH_RANGE, 3)))
 
             if num_iterations > 2500:
                 
                 domain_classifier_learning_rate = max(0, domain_classifier_learning_rate - domain_classifier_learning_rate_decay)
                 generator_learning_rate = max(0, generator_learning_rate - generator_learning_rate_decay)
-                discriminator_learning_rate = max(0, discriminator_learning_rate - discriminator_learning_rate_decay)
+                #discriminator_learning_rate = max(0, discriminator_learning_rate - discriminator_learning_rate_decay)
 
             #if discriminator_learning_rate == 0 or generator_learning_rate == 0:
              #   print('Early stop training.')
@@ -96,12 +96,12 @@ def train(processed_dir: str, test_wav_dir: str):
             #     lambda_identity = 1
             #     domain_classifier_learning_rate = 0
             #     generator_learning_rate = max(0, generator_learning_rate - generator_learning_rate_decay)
-              #  discriminator_learning_rate = discriminator_learning_rate + discriminator_learning_rate_decay
+                discriminator_learning_rate = discriminator_learning_rate + discriminator_learning_rate_decay
 
             if generator_learning_rate <= 0.0001:
                  generator_learning_rate = 0.0001
-            if discriminator_learning_rate <= 0.0001:
-                 discriminator_learning_rate = 0.0001
+            if discriminator_learning_rate >= 0.0002:
+                 discriminator_learning_rate = 0.0002
 
             start = i * BATCHSIZE
             end = (i + 1) * BATCHSIZE
@@ -200,7 +200,7 @@ def train(processed_dir: str, test_wav_dir: str):
                 source_test_sample_label = np.zeros([len(one_style_batch),len(all_styles)])
                 target_test_sample_label = np.zeros([len(one_style_batch),len(all_styles)])
                 temp_index_s = label_enc.transform([style])[0]
-                temp_index_t = (temp_index_s + 2) % len(all_styles)
+                temp_index_t = (temp_index + 2) % len(all_styles)
 
                 
                 for i in range(len(one_style_batch)):
@@ -209,7 +209,7 @@ def train(processed_dir: str, test_wav_dir: str):
                 
 
                 #get conversion target name ,like pop_piano_test_1
-                target_name = label_enc.inverse_transform([temp_index_t])[0]
+                target_name = label_enc.inverse_transform([temp_index])[0]
 
                 generated_results,origin_midi,generated_cycle = model.test(sample_images, target_test_sample_label, source_test_sample_label)
 
@@ -217,7 +217,7 @@ def train(processed_dir: str, test_wav_dir: str):
 
                 midi_path_origin = os.path.join(file_path, '{}_origin.mid'.format(name))
                 midi_path_transfer = os.path.join(file_path, '{}_transfer_2_{}.mid'.format(name,target_name))
-                midi_path_cycle = os.path.join(file_path, '{}_transfer_2_{}_cycle.mid'.format(name,target_name))
+                midi_path_cycle = os.path.join(file_path, '{}_transfer_2_{}_cycle.mid'.format(target_name,name))
 
                 save_midis(origin_midi, midi_path_origin)
                 save_midis(generated_results, midi_path_transfer)

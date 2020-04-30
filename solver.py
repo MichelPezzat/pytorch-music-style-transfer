@@ -354,7 +354,7 @@ class Solver(object):
     
 
     def test(self):
-        """Translate speech using StarGAN ."""
+        """Translate music using StarGAN ."""
         # Load the trained generator.
         self.restore_model(self.test_iters)
         
@@ -362,6 +362,9 @@ class Solver(object):
         # Set data loader.
         d, style = TestSet(self.test_dir).test_data(self.src_style)
         targets = self.trg_style
+
+        label_o = self.stls_enc.transform([style])[0]
+        label_o = np.asarray([label_o])
        
         for target in targets:
             print(target)
@@ -376,23 +379,41 @@ class Solver(object):
                     filename = filename.split('.')[0]
                     
 
-                    convert_result = []
+                            
                     one_seg = torch.FloatTensor(content).to(self.device)
-                    one_seg = one_seg.view(1,one_seg.size(0), one_seg.size(1), one_seg.size(2))
-                    l = torch.FloatTensor(label_t)
+                    one_seg = one_seg.view(1,one_seg.size(0), one_seg.size(1),one_seg.size(2))
+                    l_t = torch.FloatTensor(label_t)
                     one_seg = one_seg.to(self.device)
-                    l = l.to(self.device)
-                    one_set_return = self.G(one_seg, l).data.cpu().numpy()
+                    l_t = l_t.to(self.device)
 
-                    one_set_return_binary = to_binary(one_set_return,0.5)
+
+                    one_set_transfer = self.G(one_seg, l_t)
+
+                    l_o = torch.FloatTensor(label_o)
+                    l_o = l_o.to(self.device)
+                        
+                    one_set_cycle = self.G(one_set_transfer, l_o).data.cpu().numpy()
+                    one_set_transfer = one_set_return.data.cpu().numpy()
+
+
+
+                    one_set_return_binary = to_binary(one_set_transfer,0.5)
+                    one_set_cycle_binary = to_binary(one_set_cycle,0.5)
                         
 
-                    name = f'{style}-{target}_iter{i+1}_{filename}'
-                    path = os.path.join(self.result_dir, name)
-                    print(f'[save]:{path}')
-                    #librosa.output.write_wav(path, wav, SAMPLE_RATE)
-                    save_midis(one_set_return_binary,path)
+                    name_origin = f'{style}-{target}_iter{i+1}_{filename}_origin'
+                    name_transfer = f'{style}-{target}_iter{i+1}_{filename}_transfer'
+                    name_cycle = f'{style}-{target}_iter{i+1}_{filename}_cycle'
 
+                    path_origin = os.path.join(self.sample_dir, name_origin)
+                    path_transfer = os.path.join(self.sample_dir, name_transfer)
+                    path_cycle = os.path.join(self.sample_dir, name_cycle)
+
+                    print(f'[save]:{path_origin},{path_transfer},{path_cycle}')
+                        
+                    save_midis(one_seg,path_origin)
+                    save_midis(one_set_transfer,path_transfer)
+                    save_midis(one_set_cycle,path_cycle)
                     
 
                    

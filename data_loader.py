@@ -104,11 +104,11 @@ print(list(reversed(styles)))
 
 #print(data.size(), s,label)
 
-#loader = data_loader('./data/rock_bossanova_funk_RnB', batch_size=2)
+loader = data_loader('./data/rock_bossanova_funk_RnB', batch_size=2)
 
-#data,s,label = next(iter(loader))
+data,s,label = next(iter(loader))
 
-#print(data.size(),label)
+print(data.size(),label)
 
 class TestSet(object):
 

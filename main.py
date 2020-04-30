@@ -68,8 +68,8 @@ if __name__ == '__main__':
 
     # Test configuration.
     parser.add_argument('--test_iters', type=int, default=200000, help='test model from this step')
-    parser.add_argument('--src_speaker', type=str, default=None, help='test model source speaker')
-    parser.add_argument('--trg_speaker', type=str, default="['rock', 'bossanova']", help='string list repre of target speakers eg."[a,b]"')
+    parser.add_argument('--src_style', type=str, default=None, help='test model source speaker')
+    parser.add_argument('--trg_style', type=str, default="['rock', 'bossanova']", help='string list repre of target speakers eg."[a,b]"')
 
     # Miscellaneous.
     parser.add_argument('--num_workers', type=int, default=4)
@@ -79,10 +79,10 @@ if __name__ == '__main__':
     # Directories.
     parser.add_argument('--data_dir', type=str, default='data/rock_bossanova_funk_RnB')
     parser.add_argument('--test_dir', type=str, default='data/test')
-    parser.add_argument('--log_dir', type=str, default='starganvc/logs')
-    parser.add_argument('--model_save_dir', type=str, default='starganvc/models')
-    parser.add_argument('--sample_dir', type=str, default='starganvc/samples')
-    parser.add_argument('--result_dir', type=str, default='starganvc/results')
+    parser.add_argument('--log_dir', type=str, default='stargan/logs')
+    parser.add_argument('--model_save_dir', type=str, default='stargan/models')
+    parser.add_argument('--sample_dir', type=str, default='stargan/samples')
+    parser.add_argument('--result_dir', type=str, default='stargan/results')
     
     # Step size.
     parser.add_argument('--log_step', type=int, default=10)

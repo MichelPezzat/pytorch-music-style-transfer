@@ -106,8 +106,8 @@ class Generator(nn.Module):
         
 
         layers.append(Conv2d_Layer(dim_in=3, dim_out=conv_dim,ks = 7,s = 1,padding=3))
-        layers.append(Conv2d_Layer(dim_in=conv_dim, dim_out=conv_dim*2,ks =4,s = 2))
-        layers.append(Conv2d_Layer(dim_in=conv_dim*2, dim_out=conv_dim*4,ks = 4,s = 2))
+        layers.append(Conv2d_Layer(dim_in=conv_dim, dim_out=conv_dim*2,ks =3,s = 2))
+        layers.append(Conv2d_Layer(dim_in=conv_dim*2, dim_out=conv_dim*4,ks = 3,s = 2))
 
         
 
@@ -126,8 +126,10 @@ class Generator(nn.Module):
 
 
         # Up-sampling layers.
-        self.up1 = ConvTranspose2d_Layer(dim_in=conv_dim*4+c_dim, dim_out=conv_dim*2,ks = 4,s = 2)
-        self.up2 = ConvTranspose2d_Layer(dim_in=conv_dim*2+c_dim, dim_out=conv_dim,ks = 4,s = 2)
+
+        
+        self.up1 = ConvTranspose2d_Layer(dim_in=conv_dim*4+c_dim, dim_out=conv_dim*2,ks = 3,s = 2)
+        self.up2 = ConvTranspose2d_Layer(dim_in=conv_dim*2+c_dim, dim_out=conv_dim,ks = 3,s = 2)
         self.up3 = nn.Conv2d(conv_dim+c_dim, 3, kernel_size=7, stride=1, bias=False,padding =3)
         
 
@@ -142,13 +144,19 @@ class Generator(nn.Module):
         x = self.downsample(x)
         c = c.view(c.size(0), c.size(1), 1, 1)
 
+
         c1 = c.repeat(1, 1, x.size(2), x.size(3))
         x = torch.cat([x, c1], dim=1)
+        
         x = self.up1(x)
+        x = F.pad(x, [0, 1, 0, 1])
 
         c2 = c.repeat(1,1,x.size(2), x.size(3))
         x = torch.cat([x, c2], dim=1)
+
         x = self.up2(x)
+        x = F.pad(x, [0, 1, 0, 1])
+
 
         c3 = c.repeat(1,1,x.size(2), x.size(3))
         x = torch.cat([x, c3], dim=1)

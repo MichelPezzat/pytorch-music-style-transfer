@@ -99,7 +99,7 @@ class Solver(object):
 
     def build_tensorboard(self):
         """Build a tensorboard logger."""
-        #from logger import Logger
+        from logger import Logger
         self.logger = Logger(self.log_dir)
 
     def update_lr(self, g_lr, d_lr, c_lr):

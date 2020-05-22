@@ -1,7 +1,7 @@
 import os
 import argparse
-#from solver import Solver
-#from data_loader import data_loader
+from solver import Solver
+from data_loader import data_loader
 from torch.backends import cudnn
 
 

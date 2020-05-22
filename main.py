@@ -1,7 +1,7 @@
 import os
 import argparse
-from solver import Solver
-from data_loader import data_loader
+#from solver import Solver
+#from data_loader import data_loader
 from torch.backends import cudnn
 
 
@@ -41,14 +41,16 @@ def main(config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('-f')
+
     # Model configuration.
 
-    parser.add_argument('--lambda_cycle', type=float, default=3, help='weight for cycle loss')
-    parser.add_argument('--lambda_cls', type=float, default=2, help='weight for domain classification loss')
+    parser.add_argument('--lambda_cycle', type=float, default=10, help='weight for cycle loss')
+    parser.add_argument('--lambda_cls', type=float, default=5, help='weight for domain classification loss')
     
-    parser.add_argument('--lambda_identity', type=float, default=2, help='weight for identity loss')
+    parser.add_argument('--lambda_identity', type=float, default=8, help='weight for identity loss')
 
-    parser.add_argument('--sigma_d', type=float, default=0.01, help='sigmma of gaussian noise for discriminators')
+    parser.add_argument('--sigma_d', type=float, default=0.1, help='sigmma of gaussian noise for discriminators')
 
 
     # Training configuration.

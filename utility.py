@@ -1,7 +1,5 @@
 import numpy as np
 
-import pyworld as pw
-
 import os,shutil
 
 import glob

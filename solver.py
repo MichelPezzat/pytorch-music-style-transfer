@@ -8,14 +8,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 from torchvision.utils import save_image
-
 from data_loader import TestSet
 from model import Discriminator, DomainClassifier, Generator
 from utility import *
-#from preprocess import FRAMES, SAMPLE_RATE, FFTSIZE
 import random
 from sklearn.preprocessing import LabelBinarizer
-#from pyworld import decode_spectral_envelope, synthesize
 import librosa
 import ast
 
@@ -102,7 +99,7 @@ class Solver(object):
 
     def build_tensorboard(self):
         """Build a tensorboard logger."""
-        from logger import Logger
+        #from logger import Logger
         self.logger = Logger(self.log_dir)
 
     def update_lr(self, g_lr, d_lr, c_lr):
@@ -155,7 +152,7 @@ class Solver(object):
             label_trg = label_trg.to(self.device)     # Target domain one-hot labels.
             style_idx_org = style_idx_org.to(self.device) # Original domain labels
             style_idx_trg = style_idx_trg.to(self.device) #Target domain labels
-
+            gaussian_noise = gaussian_noise.to(self.device) #gaussian noise for discriminators
             # =================================================================================== #
             #                             2. Train the discriminator                              #
             # =================================================================================== #
@@ -174,22 +171,21 @@ class Solver(object):
             out_r = self.D(x_real + gaussian_noise, label_org)
             # Compute loss with fake audio frame.
             x_fake = self.G(x_real, label_trg)
-            out_f = self.D(x_fake.detach() + gaussian_noise, label_trg)
+            out_f = self.D(x_fake + gaussian_noise, label_trg)
             d_loss_t = F.mse_loss(input=out_f,target=torch.zeros_like(out_f, dtype=torch.float)) + \
                 F.mse_loss(input=out_r, target=torch.ones_like(out_r, dtype=torch.float))
            
             out_cls = self.C(x_fake)
-            d_loss_cls = CELoss(input=out_cls, target=speaker_idx_trg)
+            d_loss_cls = CELoss(input=out_cls, target=style_idx_trg)
 
-            # Compute loss for gradient penalty.
+            #Compute loss for gradient penalty.
             #alpha = torch.rand(x_real.size(0), 1, 1, 1).to(self.device)
             #x_hat = (alpha * x_real.data + (1 - alpha) * x_fake.data).requires_grad_(True)
             #out_src = self.D(x_hat, label_trg)
             #d_loss_gp = self.gradient_penalty(out_src, x_hat)
 
-            d_loss = d_loss_t + self.lambda_cls * d_loss_cls 
-                            # \
-                            #+ 5*d_loss_gp
+            d_loss = d_loss_t +  self.lambda_cls*d_loss_cls 
+                               #\+ 5*d_loss_gp
 
             self.reset_grad()
             d_loss.backward()
@@ -211,7 +207,7 @@ class Solver(object):
                 g_loss_fake = F.mse_loss(input=g_out_src, target=torch.ones_like(g_out_src, dtype=torch.float))
                 
                 out_cls = self.C(x_real)
-                g_loss_cls = CELoss(input=out_cls, target=speaker_idx_org)
+                g_loss_cls = CELoss(input=out_cls, target=style_idx_org)
 
                 # Target-to-original domain.
                 x_reconst = self.G(x_fake, label_org)
@@ -280,28 +276,40 @@ class Solver(object):
                         l_o = torch.FloatTensor(label_o)
                         l_o = l_o.to(self.device)
                         
-                        one_set_cycle = self.G(one_set_transfer, l_o).data.cpu().numpy()
-                        one_set_transfer = one_set_return.data.cpu().numpy()
+                        one_set_cycle = self.G(one_set_transfer.to(self.device), l_o).data.cpu().numpy()
+                        one_set_transfer = one_set_transfer.data.cpu().numpy()
 
 
 
-                        one_set_return_binary = to_binary(one_set_transfer,0.5)
+                        one_set_transfer_binary = to_binary(one_set_transfer,0.5)
                         one_set_cycle_binary = to_binary(one_set_cycle,0.5)
+
                         
+                        one_set_transfer_binary = one_set_transfer_binary.reshape(-1, one_set_transfer_binary.shape[2], one_set_transfer_binary.shape[3],one_set_transfer_binary.shape[1])
+                        one_set_cycle_binary = one_set_cycle_binary.reshape(-1, one_set_cycle_binary.shape[2], one_set_cycle_binary.shape[3],one_set_cycle_binary.shape[1])
+
+                        print(one_set_transfer_binary.shape,one_set_cycle_binary.shape )
+
 
                         name_origin = f'{style}-{target}_iter{i+1}_{filename}_origin'
                         name_transfer = f'{style}-{target}_iter{i+1}_{filename}_transfer'
                         name_cycle = f'{style}-{target}_iter{i+1}_{filename}_cycle'
 
-                        path_origin = os.path.join(self.sample_dir, name_origin)
-                        path_transfer = os.path.join(self.sample_dir, name_transfer)
-                        path_cycle = os.path.join(self.sample_dir, name_cycle)
+                        path_samples_per_iter = os.path.join(self.sample_dir, f'iter{i+1}')
+
+                        if not os.path.exists(path_samples_per_iter):
+                          os.makedirs(path_samples_per_iter)
+
+
+                        path_origin = os.path.join(path_samples_per_iter, name_origin)
+                        path_transfer = os.path.join(path_samples_per_iter, name_transfer)
+                        path_cycle = os.path.join(path_samples_per_iter, name_cycle)
 
                         print(f'[save]:{path_origin},{path_transfer},{path_cycle}')
                         
-                        save_midis(one_seg,path_origin)
-                        save_midis(one_set_transfer,path_transfer)
-                        save_midis(one_set_cycle,path_cycle)
+                        save_midis(content.reshape(1, content.shape[1], content.shape[2],content.shape[0]),'{}.mid'.format(path_origin))
+                        save_midis(one_set_transfer_binary,'{}.mid'.format(path_transfer))
+                        save_midis(one_set_cycle_binary,'{}.mid'.format(path_cycle))
                         
             # Save model checkpoints.
             if (i+1) % self.model_save_step == 0:
@@ -321,19 +329,6 @@ class Solver(object):
                 self.update_lr(g_lr, d_lr, c_lr)
                 print ('Decayed learning rates, g_lr: {}, d_lr: {}.'.format(g_lr, d_lr))
 
-    def gradient_penalty(self, y, x):
-        """Compute gradient penalty: (L2_norm(dy/dx) - 1)**2."""
-        weight = torch.ones(y.size()).to(self.device)
-        dydx = torch.autograd.grad(outputs=y,
-                                   inputs=x,
-                                   grad_outputs=weight,
-                                   retain_graph=True,
-                                   create_graph=True,
-                                   only_inputs=True)[0]
-
-        dydx = dydx.view(dydx.size(0), -1)
-        dydx_l2norm = torch.sqrt(torch.sum(dydx**2, dim=1))
-        return torch.mean((dydx_l2norm-1)**2)
 
     def reset_grad(self):
         """Reset the gradient buffers."""
@@ -354,7 +349,7 @@ class Solver(object):
     
 
     def test(self):
-        """Translate music using StarGAN ."""
+        """Translate speech using StarGAN ."""
         # Load the trained generator.
         self.restore_model(self.test_iters)
         
@@ -362,9 +357,6 @@ class Solver(object):
         # Set data loader.
         d, style = TestSet(self.test_dir).test_data(self.src_style)
         targets = self.trg_style
-
-        label_o = self.stls_enc.transform([style])[0]
-        label_o = np.asarray([label_o])
        
         for target in targets:
             print(target)
@@ -379,41 +371,23 @@ class Solver(object):
                     filename = filename.split('.')[0]
                     
 
-                            
+                    convert_result = []
                     one_seg = torch.FloatTensor(content).to(self.device)
-                    one_seg = one_seg.view(1,one_seg.size(0), one_seg.size(1),one_seg.size(2))
-                    l_t = torch.FloatTensor(label_t)
+                    one_seg = one_seg.view(1,one_seg.size(0), one_seg.size(1), one_seg.size(2))
+                    l = torch.FloatTensor(label_t)
                     one_seg = one_seg.to(self.device)
-                    l_t = l_t.to(self.device)
+                    l = l.to(self.device)
+                    one_set_return = self.G(one_seg, l).data.cpu().numpy()
 
-
-                    one_set_transfer = self.G(one_seg, l_t)
-
-                    l_o = torch.FloatTensor(label_o)
-                    l_o = l_o.to(self.device)
-                        
-                    one_set_cycle = self.G(one_set_transfer, l_o).data.cpu().numpy()
-                    one_set_transfer = one_set_return.data.cpu().numpy()
-
-
-
-                    one_set_return_binary = to_binary(one_set_transfer,0.5)
-                    one_set_cycle_binary = to_binary(one_set_cycle,0.5)
+                    one_set_return_binary = to_binary(one_set_return,0.5)
                         
 
-                    name_origin = f'{style}-{target}_iter{i+1}_{filename}_origin'
-                    name_transfer = f'{style}-{target}_iter{i+1}_{filename}_transfer'
-                    name_cycle = f'{style}-{target}_iter{i+1}_{filename}_cycle'
+                    name = f'{style}-{target}_iter{i+1}_{filename}'
+                    path = os.path.join(self.result_dir, name)
+                    print(f'[save]:{path}')
+                    #librosa.output.write_wav(path, wav, SAMPLE_RATE)
+                    save_midis(one_set_return_binary,path)
 
-                    path_origin = os.path.join(self.sample_dir, name_origin)
-                    path_transfer = os.path.join(self.sample_dir, name_transfer)
-                    path_cycle = os.path.join(self.sample_dir, name_cycle)
-
-                    print(f'[save]:{path_origin},{path_transfer},{path_cycle}')
-                        
-                    save_midis(one_seg,path_origin)
-                    save_midis(one_set_transfer,path_transfer)
-                    save_midis(one_set_cycle,path_cycle)
                     
 
                    

@@ -38,16 +38,16 @@ python main.py --mode test --test_iters 200000 --src_style bossanova --trg_style
 
 ### Generator
 
-<img src="imgs/2020-05-25.png" width="500px"/>
+<img src="imgs/Generator.png"/>
 
 
 ### Discrminator
 
-<img src="imgs/2020-05-25(1).png" width="200px"/>
+<img src="imgs/Discrminator.png"/>
 
 ### Domain Classifier
 
-<img src="imgs/2020-05-25(2).png" width="200px"/>
+<img src="imgs/DomainClassifier.png"/>
 
 ## [Reference]
 

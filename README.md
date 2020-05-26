@@ -43,11 +43,11 @@ python main.py --mode test --test_iters 200000 --src_style bossanova --trg_style
 
 ### Discrminator
 
-<img src="imgs/2020-05-25(1).png" width="500px"/>
+<img src="imgs/2020-05-25(1).png" width="200px"/>
 
 ### Domain Classifier
 
-<img src="imgs/2020-05-25(2).png" width="500px"/>
+<img src="imgs/2020-05-25(2).png" width="200px"/>
 
 ## [Reference]
 

@@ -367,26 +367,47 @@ class Solver(object):
             with torch.no_grad():
 
                 for filename, content in d.items():
+                        
+                        
+                        filename = filename.split('.')[0]
+                            
+                        one_seg = torch.FloatTensor(content).to(self.device)
+                        one_seg = one_seg.view(1,one_seg.size(0), one_seg.size(1),one_seg.size(2))
+                        l_t = torch.FloatTensor(label_t)
+                        one_seg = one_seg.to(self.device)
+                        l_t = l_t.to(self.device)
 
-                    filename = filename.split('.')[0]
-                    
 
-                    convert_result = []
-                    one_seg = torch.FloatTensor(content).to(self.device)
-                    one_seg = one_seg.view(1,one_seg.size(0), one_seg.size(1), one_seg.size(2))
-                    l = torch.FloatTensor(label_t)
-                    one_seg = one_seg.to(self.device)
-                    l = l.to(self.device)
-                    one_set_return = self.G(one_seg, l).data.cpu().numpy()
+                        one_set_transfer = self.G(one_seg, l_t).cpu().numpy()
 
-                    one_set_return_binary = to_binary(one_set_return,0.5)
+
+
+                        one_set_transfer_binary = to_binary(one_set_transfer,0.5)
+
+                        
+                        one_set_transfer_binary = one_set_transfer_binary.reshape(-1, one_set_transfer_binary.shape[2], one_set_transfer_binary.shape[3],one_set_transfer_binary.shape[1])
+
+                        name_origin = f'{style}-{target}_iter{i+1}_{filename}_origin'
+                        name_transfer = f'{style}-{target}_iter{i+1}_{filename}_transfer'
+                       
+
+                        path = os.path.join(self.result_dir, f'iter{i+1}')
+
+
+                        path_origin = os.path.join(path, name_origin)
+                        path_transfer = os.path.join(path, name_transfer)
                         
 
-                    name = f'{style}-{target}_iter{i+1}_{filename}'
-                    path = os.path.join(self.result_dir, name)
-                    print(f'[save]:{path}')
-                    #librosa.output.write_wav(path, wav, SAMPLE_RATE)
-                    save_midis(one_set_return_binary,path)
+                        print(f'[save]:{path_origin},{path_transfer}')
+                        
+                        save_midis(content.reshape(1, content.shape[1], content.shape[2],content.shape[0]),'{}.mid'.format(path_origin))
+                        save_midis(one_set_transfer_binary,'{}.mid'.format(path_transfer))
+                        
+
+
+
+
+               
 
                     
 

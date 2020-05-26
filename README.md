@@ -33,3 +33,33 @@ python main.py
 ```
 python main.py --mode test --test_iters 200000 --src_style bossanova --trg_style "['rock','funk']"
 ```
+
+# Network Architecture
+
+### Generator
+
+<img src="imgs/2020-05-25.png" width="500px"/>
+
+
+### Discrminator
+
+<img src="imgs/2020-05-25(1).png" width="500px"/>
+
+### Domain Classifier
+
+<img src="imgs/2020-05-25(2).png" width="500px"/>
+
+## [Reference]
+
+[tensorflow StarGAN-VC code](https://github.com/hujinsen/StarGAN-Voice-Conversion)
+
+[pytorch-StarGAN-VC code](https://github.com/liusongxiang/StarGAN-Voice-Conversion)
+
+[StarGAN-VC paper](https://arxiv.org/abs/1806.02169)
+
+[Symbolic Music Genre Transfer with CycleGAN code](https://github.com/sumuzhao/CycleGAN-Music-Style-Transfer.git)
+
+[Symbolic Music Genre Transfer with CycleGAN paper](https://arxiv.org/pdf/1809.07575.pdf)
+
+[MGTGAN paper](http://www.studiomusicatreviso.it/icnmc/library/Paper_63_2019.pdf)
+

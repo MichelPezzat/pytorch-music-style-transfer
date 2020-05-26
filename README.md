@@ -43,7 +43,7 @@ python main.py --mode test --test_iters 200000 --src_style bossanova --trg_style
 
 ### Discrminator
 
-<img src="imgs/Discrminator.png"/>
+<img src="imgs/Discriminator.png"/>
 
 ### Domain Classifier
 
